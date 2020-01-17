@@ -22,7 +22,7 @@ type NumberService interface {
 }
 
 
-
+// TODO: Order response before sending
 
 // numberService is a concrete implementation of StringService
 type numberService struct{}
