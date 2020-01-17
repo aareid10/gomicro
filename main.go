@@ -1,11 +1,11 @@
 package main
 
 import (
-  // "gomicro/microstr"
+  "gomicro/microstr"
   "gomicro/micronum"
 )
 
 func main()  {
-  // microstr.Initialize()
+  microstr.Initialize()
   micronum.Initialize()
 }
