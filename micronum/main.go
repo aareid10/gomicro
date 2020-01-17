@@ -1,7 +1,6 @@
 package micronum
 
 import (
-  "os"
   "sort"
 	"context"
   "strconv"
@@ -9,30 +8,34 @@ import (
 	"errors"
   "log"
 	"net/http"
+
+  "gomicro/worker"
+  "gomicro/workload/fib"
+
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
 )
-
 
 type numberService struct{}
 type NumberService interface {
 	FibonacciCon(string) ([]int, error)
 }
 func (numberService) FibonacciCon(s string) ([]int, error) {
-  layers, err  := strconv.Atoi(s)
-  response := make([]int, layers)
-  log.Print("layers", layers)
+  layers, err := strconv.Atoi(s)
+  response    := make([]int, layers)
+  log.Print("|-: jobs layers: ", layers)
   if err == nil {
     jobs    := make(chan int, layers)
     results := make(chan int, layers)
-    log.Print("setup done.")
-    for w := 0; w < layers; w++ { go worker(jobs, results) }
+    log.Print("|-> setup done.")
+    for w := 0; w < layers; w++ { go worker.Spawn(jobs, results, fib.Run) }
     for i := 0; i < layers; i++ { jobs <- i }
     close(jobs)
-    log.Print("jobs enqueue done.")
+    log.Print("|-> jobs enqueue done.")
     for j := 0; j < layers; j++ { response[j] = <- results }
-    log.Print("jobs results done.")
-    return sort.(response), nil
+    log.Print("|-> jobs results done.")
+    sort.Ints(response)
+    return response, nil
   } else {
     log.Print("layer cast error.")
     return nil, errors.New("empty string")
@@ -64,24 +67,12 @@ func makefibonacciConEndpoint(svc NumberService) endpoint.Endpoint {
 	}
 }
 
-func Initialize() {
+func InitializeFibc() *httptransport.Server {
 	svc := numberService{}
 	fibonacciConHandler := httptransport.NewServer(
 		makefibonacciConEndpoint(svc),
 		decodefibonacciConRequest,
 		encodeResponse,
 	)
-	http.Handle("/fibcon", fibonacciConHandler)
-  port := os.Getenv("PORT")
-	if port == "" { port = "8080" }
-	log.Fatal(http.ListenAndServe(":"+ port, nil))
-}
-
-
-func worker(jobs <-chan int, results chan<- int)  {
-  for n := range jobs { results <- fib(n) }
-}
-func fib(n int) int {
-  if n <= 1 { return n }
-  return fib(n - 1) + fib(n - 2)
+  return fibonacciConHandler
 }

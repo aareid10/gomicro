@@ -1,11 +1,9 @@
 package microstr
 
 import (
-  "os"
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
@@ -93,28 +91,24 @@ func makeCountEndpoint(svc StringService) endpoint.Endpoint {
 
 
 // Transports expose the service to the network. In this first example we utilize JSON over HTTP.
-func Initialize() {
+func InitializeUppercase() *httptransport.Server {
 	svc := stringService{}
-
 	uppercaseHandler := httptransport.NewServer(
 		makeUppercaseEndpoint(svc),
 		decodeUppercaseRequest,
 		encodeResponse,
 	)
+  return uppercaseHandler
+}
 
+func InitializeCount() *httptransport.Server {
+	svc := stringService{}
 	countHandler := httptransport.NewServer(
 		makeCountEndpoint(svc),
 		decodeCountRequest,
 		encodeResponse,
 	)
-
-	http.Handle("/uppercase", uppercaseHandler)
-	http.Handle("/count", countHandler)
-  port := os.Getenv("PORT")
-	if port == "" {
-    port = "8080" // Default port if not specified
-	}
-	log.Fatal(http.ListenAndServe(":"+ port, nil))
+  return countHandler
 }
 
 func decodeUppercaseRequest(_ context.Context, r *http.Request) (interface{}, error) {
